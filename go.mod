@@ -3,7 +3,14 @@ module github.com/syaukhul08/goCommerce
 go 1.17
 
 require (
+	github.com/shopspring/decimal v1.2.0
+	gorm.io/driver/mysql v1.3.4
+	gorm.io/gorm v1.23.5
+)
+
+require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.1 // indirect
@@ -21,5 +28,4 @@ require (
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gorm.io/driver/postgres v1.3.7 // indirect
-	gorm.io/gorm v1.23.5 // indirect
 )

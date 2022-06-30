@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -29,26 +30,46 @@ type DBConfig struct {
 	DBPassword string
 	DBName     string
 	DBPort     string
+	DBDriver   string
 }
 
 func (server *Server) Initialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("Welcome to " + appConfig.AppName)
 
-	var err error
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", dbConfig.DBHost, dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBName, dbConfig.DBPort)
-	server.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		panic("failed on connecting database")
-	}
-
-	server.Router = mux.NewRouter()
+	server.InitializeDB(dbConfig)
 	server.InitializeRoutes()
 }
 
 func (server *Server) Run(addr string) {
 	fmt.Printf("Listening to port %s", addr)
 	log.Fatal(http.ListenAndServe(addr, server.Router))
+}
+
+func (server *Server) InitializeDB(dbConfig DBConfig) {
+
+	var err error
+
+	if dbConfig.DBDriver == "mysql" {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBName)
+		server.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	} else {
+		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", dbConfig.DBHost, dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBName, dbConfig.DBPort)
+		server.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	}
+
+	if err != nil {
+		panic("Failed on connecting database server")
+	}
+
+	for _, model := range RegisterModels() {
+		err = server.DB.Debug().Statement.AutoMigrate(model.Model)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Database Migrate Successfully")
+	}
 }
 
 func getEnv(key, fallback string) string {
